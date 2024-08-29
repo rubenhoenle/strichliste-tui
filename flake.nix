@@ -28,7 +28,7 @@
       matui = pkgs.buildGoModule {
         name = "maTUI";
         version = "0.0.1";
-        vendorHash = null;
+        vendorHash = "sha256-Lbr0k5Es6EiLBRz3D6NMGd3/mbcuvxl/Al4zI7MTGx0=";
         src = ./.;
       };
     in
