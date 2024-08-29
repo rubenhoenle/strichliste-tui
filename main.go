@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -41,11 +42,25 @@ type User struct {
 	BALANCE int    `json:"balance"`
 }
 
+var statusMessageStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.AdaptiveColor{Light: "#04B575", Dark: "#04B575"}).
+	Render
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if msg.String() == "ctrl+c" {
+		// Don't match any of the keys below if we're actively filtering.
+		if m.list.FilterState() == list.Filtering {
+			break
+		}
+
+		switch {
+		case msg.String() == "ctrl+c":
 			return m, tea.Quit
+		case msg.String() == "enter":
+			selectedItem := m.list.SelectedItem()
+			statusCmd := m.list.NewStatusMessage(statusMessageStyle("Added " + selectedItem.FilterValue()))
+			return m, statusCmd
 		}
 	case tea.WindowSizeMsg:
 		h, v := docStyle.GetFrameSize()
@@ -93,15 +108,14 @@ func getUsers() []User {
 		ids = append(ids, user.ID)
 	}
 
-	fmt.Println("IDs:", ids)
 	return response.Users
 }
 
 func main() {
 	users := getUsers()
 	items := []list.Item{}
-	for _, element := range users {
-		items = append(items, item{title: element.NAME, desc: "abc"})
+	for _, user := range users {
+		items = append(items, item{title: user.NAME, desc: strconv.Itoa(user.BALANCE)})
 	}
 
 	m := model{list: list.New(items, list.NewDefaultDelegate(), 0, 0)}
